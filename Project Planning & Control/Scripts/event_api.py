@@ -2,7 +2,7 @@
 
 import requests
 
-api_key = "67bd3054f69a3246128e93cd05645468"
+api_key = ""
 
 # Setting header type for api calls
 header = {
