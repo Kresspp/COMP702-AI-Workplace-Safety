@@ -2,7 +2,7 @@
 
 import requests
 
-api_key = ""
+api_key = "67bd3054f69a3246128e93cd05645468"
 
 # Setting header type for api calls
 header = {
@@ -11,6 +11,7 @@ header = {
 }
 
 # Post the address information to the correlating event in api
+
 def create_event():
     post_url = "https://api-event-dev.inviol.com/api/v1/events"
     params = {
@@ -36,20 +37,29 @@ def create_event():
     response = requests.post(post_url, headers=header, json=params)
     get_id = response.json()
     event_id = get_id['id']
-    return event_id
 
-# Pass in even_id to read blobs in storage
-def put_event_bounding_box():
     post_video_url = "https://api-event-dev.inviol.com/api/v1/videos"
     params = {
-        "bbox_video_uri": "https://steventdatadev001.blob.core.windows.net/events/vulcan/{}/out_bb_0.mp4".format(create_event()),
+        "bbox_video_uri": "",
         "camera_id": "123e4567-e89b-12d3-a456-426614174001",
-        "event_id": "2fa42348-5db5-44e1-b7dc-a6357fb1c06d",
+        "event_id": "{}".format(event_id),
         "inference_uri": "",
-        "original_video_uri": "https://steventdatadev001.blob.core.windows.net/events/vulcan/{}/out_0.mp4".format(create_event())
+        "original_video_uri": "https://steventdatadev001.blob.core.windows.net/events/vulcan/{}/out_0.mp4".format(event_id)
+    }
+    response = requests.post(post_video_url, headers=header, json=params)
+
+    return event_id
+
+# Pass in event_id to read blobs in storage
+def put_event_bounding_box(event_id):
+    post_video_url = "https://api-event-dev.inviol.com/api/v1/videos"
+    params = {
+        "bbox_video_uri": "https://steventdatadev001.blob.core.windows.net/events/vulcan/{}/out_bb_0.mp4".format(event_id),
+        "camera_id": "123e4567-e89b-12d3-a456-426614174001",
+        "event_id": "{}".format(event_id),
+        "inference_uri": "",
+        "original_video_uri": "https://steventdatadev001.blob.core.windows.net/events/vulcan/{}/out_0.mp4".format(event_id)
     }
 
     response = requests.post(post_video_url, headers=header, json=params)
     print(response)
-
-print(create_event())
