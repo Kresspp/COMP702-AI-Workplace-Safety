@@ -1,54 +1,59 @@
 # Shapely video script to draw bounding boxes on the video captured by the raspberry pi
 
+from pydoc import classname
 import numpy as np
 import cv2
 import time
 from shapely.geometry import Polygon
 from azure.storage.blob import ContainerClient
 import os
-# from . import event_api
-
-conn_string = ""
+import sys
+sys.path.append('/home/inviol/Desktop/31-10-2022')
+import event_api
 
 # Get video from file path were the video name is video blob
 def get_video(blob_client):
-    video_blob = os.path.basename(blob_client)
-    draw_bounding_box(video_blob)
-    return video_blob
+    video_name = "{}".format(blob_client)
+    draw_bounding_box(video_name)
+    upload_bounding_box(video_name)
+    event_api.put_event_bounding_box(video_name)
 
-    
-def draw_bounding_box():
+def draw_bounding_box(video_name):
+    print(video_name)
     # Setting the colours for the bounding boxes
     COLORS = [(0, 255, 255), (255, 255, 0), (0, 255, 0), (255, 0, 0)]
 
     # Initialising lists for polygons and reading in the label names from the model
     polygons = []
     labeles = []
-    with open('/Users/juliaborlase/Desktop/uni_code/model_for_testing_PPE/obj.names', 'r') as f:
+    with open('/home/inviol/Desktop/New Code/obj.names', 'r') as f:
         labeles = [line.strip() for line in f.readlines()]
 
     # Model settings
-    net = cv2.dnn_DetectionModel("/Users/juliaborlase/Downloads/yolov4-tiny-obj.cfg", "/Users/juliaborlase/Downloads/yolov4-tiny-obj_best.weights")
+    net = cv2.dnn_DetectionModel("/home/inviol/Desktop/New Code/yolov4-tiny-obj.cfg", "/home/inviol/Desktop/New Code/yolov4-tiny-obj_best.weights")
     net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
     net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA_FP16)
     net.setInputSize(640, 480)
-    net.setInputScale(2.0 / 255)
+    net.setInputScale(1.0 / 255)
     net.setInputSwapRB(True)
 
     # Getting and setting the video 
     # cap = cv2.VideoCapture("/Users/juliaborlase/Desktop/uni_code/out_0.mp4")
-    cap = cv2.VideoCapture("/Users/juliaborlase/Desktop/uni_code/out_0.mp4")
+    print("VIDEO NAME TEST: " + video_name)
+    print("VIDEO NAME TEST FORMATTED: {}" .format(video_name))
+    cap = cv2.VideoCapture("/home/inviol/inviol_videos/{}.mp4".format(video_name))
 
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter('out_bb_0.mp4', fourcc, 20, (640,480))
+    out = cv2.VideoWriter('/home/inviol/Desktop/31-10-2022/out_bb_0.mp4', fourcc, 20, (640,480))
 
-    # While the video is be read
+    # While the video is being read
     while(cap.isOpened()):
         ret, frame = cap.read()
         if ret==True:
             image = frame #set the image variable to the current frame
             start = time.time() #start drawing
+        
             classes, confidences, boxes = net.detect(image, confThreshold=0.1, nmsThreshold=0.4)
             roi = [(1704, 720),
             (2852, 860),
@@ -93,7 +98,6 @@ def draw_bounding_box():
                         else:
                             print("Person is not weating PPE - send alert!")
 
-
             out.write(frame)
 
             cv2.imshow('frame',frame)
@@ -101,19 +105,26 @@ def draw_bounding_box():
                 break
         else:
             break
+
     cap.release()
-
     out.release()
-    print("Video Done!")
 
+    print("Shapely Video Done!")
     cv2.destroyAllWindows()
 
 # Uploading video to azure blob storage based on event id
+def upload_bounding_box(video_name):
 
+    conn_string = ""
+    container_name = "events"
+    container_client = ContainerClient.from_connection_string(conn_string, container_name)
+    blob_client = container_client.get_blob_client("vulcan/{}/out_bb_0.mp4".format(video_name))
 
-# Drawing boudning box video based on the most recent video from the camera
-draw_bounding_box()
+    print(video_name)
 
+    with open('/home/inviol/Desktop/31-10-2022/out_bb_0.mp4', 'rb') as data:
+       blob_client.upload_blob(data)
+       print("Bounding Box Video has been uploaded!")
+
+# Drawing bounding box video based on the most recent video from the camera
 # Uploading the videos to the Azure storage and Event API
-# upload_bounding_box()
-# event_api.put_event_bounding_box()
