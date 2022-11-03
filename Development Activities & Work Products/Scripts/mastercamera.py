@@ -36,7 +36,7 @@ def upload_database():
     filename = str(event_id)
     print("FILE NAME AFTER EVENT_ID: " + filename)
     os.rename("/home/inviol/inviol_videos/tmp.mp4", '/home/inviol/inviol_videos/out_0.mp4')
-    conn_str = "DefaultEndpointsProtocol=https;AccountName=steventdatadev001;AccountKey=Fkuf6xrr04sYFI2o5FGpf7UIzmbqvs4l5zmQ8z2QE0a8qPo76UlTXsk8hfdE36RQ1ByRktJ9gK2VFDsN/GrGcA==;EndpointSuffix=core.windows.net"
+    conn_str = ""
     container_name = "events"
 
     #blob_client should be set to the name of the video
